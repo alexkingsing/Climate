@@ -130,8 +130,4 @@ plt.scatter(country_data.index, country_data[month], c = country_data["color"])
 plt.show()
 
 
-# In[ ]:
-
-
-
 
