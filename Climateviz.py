@@ -52,8 +52,19 @@ def load_data(path):
     # CLEANING MONTHS NAMES
         ## Cleaning Quarters with encoding difficulties
     data["months"] = data["months"].str.replace("\x96", "-")
+
+    # ELIMINATING STANDARD DEVIATION
+    data = data[data["element"] != "Standard Deviation"]
         
-    return data, f_years
+    return data
+
+########################################################## SLICING DATAFRAME SECTION ##########################################################
+def year_range(data, country = "Nicaragua"):
+    country_data = data[(data["area"] == country)]
+    country_data = country_data.T
+    country_data = country_data.drop(index = ['area code','area','months','element code','element'])
+    country_data = country_data.dropna()
+    return country_data.index
 
 ########################################################## SLICING DATAFRAME SECTION ##########################################################
 
@@ -61,72 +72,59 @@ def config_data(data = None, country = "Nicaragua", year_bottom = 1992, year_top
         # creating sliced country dataframe
         ## instantiating limiting variables
     if data is None:
-        raise FileNotFoundError("DATA NOT PROVIDED ENDING.")
+        raise FileNotFoundError("DATA NOT PROVIDED, ENDING.")
     country =  country
     month = period
     start_year =  year_bottom
     end_year = year_top
         ## filtering
     country_data = data[(data["area"] == country) & (data["months"] == month)]
-        ## transposing and deleting unnecesary data
+        ## transposing and deleting unnecesary data. Final delete is the std dev.
     country_data = country_data.T
-    country_data = country_data.drop(['area code','area','months','element code','element'], axis=0)
+    country_data = country_data.drop(index = ['area code','area','months','element code','element'])
         ## reassigning column and adjusting type again
-    country_data.columns = ["Temperature Anomaly", "Deviation of Anomaly"]
+    country_data.columns = ["Temperature Anomaly"]
         ## filtering based on desired years
     country_data = country_data.loc[start_year:end_year]
-        ## adding std limits
-    country_data["+1 std"] = country_data["Temperature Anomaly"] + country_data["Deviation of Anomaly"]
-    country_data["-1 std"] = country_data["Temperature Anomaly"] - country_data["Deviation of Anomaly"]
     country_data = country_data.astype("float")
         ## creating color map of result for easier plotting
     country_data["color"] = np.where(country_data["Temperature Anomaly"] > 0, "red", "blue")
         ## fixing index dtype
     country_data.index = country_data.index.astype(int)
-    
     return country_data
 
-
 ########################################################## PLOT SECTION ##########################################################
-'''
-def plot_chart(country_data):
+
+def plot_chart(country_data, low = 1961, high = 2019):
 
     # setting figsize and titles
-    fig = plt.figure(figsize=(25,10))
+    fig = plt.figure()
 
     # setting X tick range dynamically and label
         # deprecated solution
         # ax = plt.gca()
         # ax.set_xticks("lowerbound", "upperbound", "step"))
+
+    # setting a dynamic step size for visibility
+    x_step = int((high - low) / 10)
+
     ax = plt.gca()
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
-    ax.set_xlabel("Year", fontdict = {"fontsize": 14})
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(x_step))
+    ax.set_xlabel("Year", fontdict = {"fontsize": 16})
 
     # setting Y tick range to a fixed lenght
-    ax.set_ylim(-1,2)
-    ax.set_ylabel("Temperature Anomaly", fontdict = {"fontsize": 14})
+    ax.yaxis.set_major_locator(ticker.MaxNLocator())
+    ax.set_ylabel("Temperature Anomaly", fontdict = {"fontsize": 16})
 
     # creating general line plot
     plt.plot(country_data.index, country_data["Temperature Anomaly"], alpha = 0.3, color = "black", label = "Temperature Anomaly")
     plt.plot(country_data.index, [0]*country_data.index.shape[0], color="black", linewidth = 1)
 
-    
-    # STD lines
-    plt.plot(country_data.index, country_data["+1 std"], alpha = 0.2, color = "red", label = "+1 Standard dev")
-    plt.plot(country_data.index, country_data["-1 std"], alpha = 0.2, color = "blue", label = "-1 Standard dev")
-    plt.fill_between(country_data.index, y1 = country_data["+1 std"], y2 = country_data["-1 std"], alpha = 0.1, facecolor = "grey")
-    
-
     # adding points above 0 in red and rest in blue
     plt.scatter(country_data.index, country_data["Temperature Anomaly"], c = country_data["color"], s = 50)
 
-    # adding signal to the highest value in the plot
-    plt.axhline(max(country_data["Temperature Anomaly"]), linestyle = "--", color = "red", linewidth = 1)
-
-    plt.legend(loc = "upper center")
+    # adding signal to the highest and lowest values in the plot
+    plt.axhline(country_data["Temperature Anomaly"].max(), linestyle = "--", color = "red", linewidth = 1)
+    plt.axhline(country_data["Temperature Anomaly"].min(), linestyle = "--", color = "blue", linewidth = 1)
 
     return fig
-
-fig_td = plot_chart(country_data)
-plt.show()
-'''
