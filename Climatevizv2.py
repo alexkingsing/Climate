@@ -1,6 +1,7 @@
+from numpy.core.fromnumeric import size
 import pandas as pd
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 ########################################################## DATA LOADING AND CLEANING SECTION ##########################################################
@@ -98,6 +99,9 @@ def config_data_onec(data = None, country = "Nicaragua", year_bottom = 1992, yea
     country_data["color"] = np.where(country_data["Temperature Anomaly"] > 0, "red", "blue")
         ## fixing index dtype
     country_data.index = country_data.index.astype(int)
+        ## setting index as column for plot purposes
+    country_data = country_data.reset_index()
+    country_data = country_data.rename(columns={"index":"Year"})
     return country_data
 
 def config_data_multi(data = None, country_list = [], year_bottom = 1992, year_top = 2019, period = "January"):
@@ -107,6 +111,47 @@ def config_data_multi(data = None, country_list = [], year_bottom = 1992, year_t
 
 ########################################################## PLOT SECTION ##########################################################
 
+def plot_onec(data):
+
+    fig = go.Figure() # instantiate parent figure
+
+    # create line to visualize actual data points
+    fig.add_scatter(
+    x = data["Year"], 
+    y = data["Temperature Anomaly"], 
+    mode="lines+markers", 
+    marker=dict(
+        color = data["color"],
+        size = 10), 
+    line=dict(color="grey")
+    )
+
+    # creating a reference line at 0
+    fig.add_scatter(
+    x = data["Year"],
+    y = [0]*len(data), # instantiating a bunch of 0s
+    mode = "lines",
+    line = dict(
+        color = "rgba(0, 43, 51, 0.3)", # setting color via RGB to set an alpha
+        dash = "dash")
+    )
+
+    fig.update_layout(
+        yaxis_title = "Temperature Anomaly",
+        xaxis_title = "Year",
+        xaxis = dict(
+            tickmode = 'linear',
+            tick0 = list(data["Year"])[0],
+            dtick = 2), # setting ticks to be all years in the existing range for easier read
+        font = dict(
+            size=14),
+        showlegend = False # hiding legend because its not needed here
+        )
+    
+    return fig
+
+
+''' DEPRECATED
 def plot_chart(country_data, low = 1961, high = 2019):
 
     # setting figsize and titles
@@ -140,3 +185,5 @@ def plot_chart(country_data, low = 1961, high = 2019):
     plt.axhline(country_data["Temperature Anomaly"].min(), linestyle = "--", color = "blue", linewidth = 1)
 
     return fig
+
+'''

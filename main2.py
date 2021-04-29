@@ -1,5 +1,7 @@
 import pandas as pd
+from streamlit.elements import data_frame
 from Climatevizv2 import *
+import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
@@ -35,12 +37,12 @@ elif viz_opt == "One country":
         low, high = st.sidebar.slider("Select years from the available period", min_value = min(years), max_value = max(years), value = (min(years), max(years))) # creating slider to retrieve desired period based on available years
         period_list = list(data["months"].unique())
         period_list.append("")
-        period = st.sidebar.selectbox("Select period to visualize", period_list, index = (len(period_list) - 1)) # period to display from slider
+        period = st.sidebar.selectbox("Select period to visualize", period_list, index = (len(period_list) - 1)) # period to display from slider , default option is an empty string for flow control
         if period != "":
             parsed_data = config_data_onec(data, country, low, high, period) # extracting country specific data based on current parameters
-            st.header(f"Visualizing **LAND** temperature anomalies for **{country}**")
-
-            ### PLOTTING IN PLOTLY MISSING
+            st.header(f"Visualizing **LAND** temperature anomalies for **{country}**") # header
+            fig = plot_onec(parsed_data) # creating figure
+            st.plotly_chart(fig, use_container_width = True) #instantiating figure and sizing to container
 
 else:
     pass
