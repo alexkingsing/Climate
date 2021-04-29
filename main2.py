@@ -1,7 +1,6 @@
 import pandas as pd
 from streamlit.elements import data_frame
 from Climatevizv2 import *
-import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
