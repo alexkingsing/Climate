@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+<<<<<<< HEAD
 import numpy as np
+=======
+>>>>>>> parent of 0d328a4 (update with initial support for multiple countries)
 from Climateviz import *
 
 # loading data and caching
