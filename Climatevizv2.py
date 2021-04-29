@@ -1,12 +1,7 @@
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-# needed for dynamic axis
-import matplotlib.ticker as ticker
+import plotly.express as px
 import streamlit as st
-
-sns.set_theme(style="whitegrid")
 
 ########################################################## DATA LOADING AND CLEANING SECTION ##########################################################
 
@@ -58,21 +53,33 @@ def load_data(path):
         
     return data
 
-########################################################## SLICING DATAFRAME SECTION ##########################################################
-def year_range(data, country = "Nicaragua"):
-    country_data = data[(data["area"] == country)]
-    country_data = country_data.T
-    country_data = country_data.drop(index = ['area code','area','months','element code','element'])
-    country_data = country_data.dropna()
+########################################################## RETRIVING AVAILABLE YEARS DATAFRAME SECTION ##########################################################
+def onec_year_range(data = None, country = "Nicaragua"):
+    if data is None:
+        raise FileNotFoundError("ERROR LOADING DATA, ENDING.")
+    country_data = data[(data["area"] == country)] # boolean masking based on country
+    country_data = country_data.T # tranposing
+    country_data = country_data.drop(index = ['area code','area','months','element code','element']) #dropping unnnecessary indexes
+    country_data = country_data.dropna() # removing indexes with no data
+    return country_data.index
+
+def multic_year_range(data = None, countries = ["Nicaragua", "Costa Rica"] ):
+    if data is None:
+        raise FileNotFoundError("ERROR LOADING DATA, ENDING.")
+    country_data = data[data["area"].apply(lambda x: x in countries)] # creating boolean mask by verifying if countries are inside the list
+    country_data = country_data.T # tranposing
+    country_data = country_data.drop(index = ['area code','area','months','element code','element']) #dropping unnnecessary indexes
+    country_data = country_data.count(axis=1) # creating count of columns with data in them
+    country_data = country_data[country_data >= 17] # removing all indexes where, for ANY country, there's no data
     return country_data.index
 
 ########################################################## SLICING DATAFRAME SECTION ##########################################################
 
-def config_data(data = None, country = "Nicaragua", year_bottom = 1992, year_top = 2019, period = "April"):
+def config_data_onec(data = None, country = "Nicaragua", year_bottom = 1992, year_top = 2019, period = "January"):
         # creating sliced country dataframe
         ## instantiating limiting variables
     if data is None:
-        raise FileNotFoundError("DATA NOT PROVIDED, ENDING.")
+        raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
     country =  country
     month = period
     start_year =  year_bottom
@@ -92,6 +99,11 @@ def config_data(data = None, country = "Nicaragua", year_bottom = 1992, year_top
         ## fixing index dtype
     country_data.index = country_data.index.astype(int)
     return country_data
+
+def config_data_multi(data = None, country_list = [], year_bottom = 1992, year_top = 2019, period = "January"):
+    if data is None:
+        raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
+    pass
 
 ########################################################## PLOT SECTION ##########################################################
 
