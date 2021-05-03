@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from plotly import plot
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -75,7 +76,7 @@ def multic_year_range(data = None, countries = ["Nicaragua", "Costa Rica"] ):
 
 ########################################################## SLICING DATAFRAME SECTION ##########################################################
 
-def config_data_onec(data = None, country = "Nicaragua", year_bottom = 1992, year_top = 2019, period = "January"):
+def config_data_onec(data = None, country = None, year_bottom = None, year_top = None, period = None):
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
     data = data[(data["area"] == country) & (data["months"] == period)] ## filtering
@@ -92,7 +93,7 @@ def config_data_onec(data = None, country = "Nicaragua", year_bottom = 1992, yea
     data = data.rename(columns={"index":"Year"})
     return data
 
-def config_data_multi(data = None, country_list = ["Nicaragua", "Costa Rica"], year_bottom = 1992, year_top = 2019, period = "January"):
+def config_data_multi(data = None, country_list = [], year_bottom = None, year_top = None, period = None):
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
     data = data[data["area"].apply(lambda x: x in country_list)]
@@ -110,7 +111,7 @@ def config_data_multi(data = None, country_list = ["Nicaragua", "Costa Rica"], y
 
 ########################################################## PLOT SECTION ##########################################################
 
-def plot_onec(data):
+def plot_onec(data, bottom, top):
 
     fig = go.Figure() # instantiate parent figure
 
@@ -128,12 +129,12 @@ def plot_onec(data):
     # creating a reference line at 0
     fig.add_shape(
     type="line",
-    x0=list(data["Year"])[0],
-    y0=0,
-    x1=list(data["Year"])[-1],
-    y1=0,
+    x0= bottom,
+    y0= 0,
+    x1= top,
+    y1= 0,
     line=dict(
-        color='rgba(0, 0, 0, 0.5)', # reference line through RGBA to add transparency
+        color='rgba(0, 0, 0, 0.3)', # reference line through RGBA to add transparency
         width=2,
         dash="dot"
         )
@@ -144,7 +145,7 @@ def plot_onec(data):
         xaxis_title = "Year",
         xaxis = dict(
             tickmode = 'linear',
-            tick0 = list(data["Year"])[0],
+            tick0 = bottom,
             dtick = 2), # setting ticks to be every 2nd year in the existing range for easier read
         font = dict(
             size=14)
@@ -152,6 +153,65 @@ def plot_onec(data):
     
     return fig
 
+def plot_multic(data, countries, bottom, top):
+
+    fig = go.Figure() # instantiating parent figure
+
+    fig.add_shape(
+    type="line", # adding reference line at axis 0
+    x0 = bottom,
+    y0 = 0,
+    x1 = top,
+    y1 = 0,
+    line=dict(
+        color='rgba(0, 0, 0, 0.3)', # reference line through RGBA to add transparency
+        width=2,
+        dash="dot"
+        )
+    )
+
+    if len(countries) < 4:
+        line_types = ['dash', 'dot', 'dashdot']
+        for i,country in enumerate(countries):
+            fig.add_scatter(
+                x = data.index,
+                y = data[country],
+                mode = "lines+markers",
+                marker = dict(
+                    color = data.iloc[:,len(countries)+i],
+                    size = 10),
+                line = dict(
+                    color = "grey",
+                    dash = line_types[i],
+                    width = 2),
+                name = country
+            )
+    
+    else:
+        for i,country in enumerate(countries):
+            fig.add_scatter(
+                x = data.index,
+                y = data[country],
+                mode = "lines+markers",
+                marker = dict(
+                    color = data.iloc[:,len(countries)+i],
+                    size = 10),
+                line = dict(color = "grey"),
+                name = country
+            )
+    
+    fig.update_layout(
+    yaxis_title = "Temperature Anomaly",
+    xaxis_title = "Year",
+    xaxis = dict(
+        tickmode = 'linear',
+        tick0 = bottom,
+        dtick = 2), # setting ticks to be every 2nd year in the existing range for easier read
+    font = dict(
+        size=14)
+    )
+
+    return fig
 
 ''' DEPRECATED
 def plot_chart(country_data, low = 1961, high = 2019):
