@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import size
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -77,37 +76,37 @@ def multic_year_range(data = None, countries = ["Nicaragua", "Costa Rica"] ):
 ########################################################## SLICING DATAFRAME SECTION ##########################################################
 
 def config_data_onec(data = None, country = "Nicaragua", year_bottom = 1992, year_top = 2019, period = "January"):
-        # creating sliced country dataframe
-        ## instantiating limiting variables
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
-    country =  country
-    month = period
-    start_year =  year_bottom
-    end_year = year_top
-        ## filtering
-    country_data = data[(data["area"] == country) & (data["months"] == month)]
-        ## transposing and deleting unnecesary data. Final delete is the std dev.
-    country_data = country_data.T
-    country_data = country_data.drop(index = ['area code','area','months','element code','element'])
-        ## reassigning column and adjusting type again
-    country_data.columns = ["Temperature Anomaly"]
-        ## filtering based on desired years
-    country_data = country_data.loc[start_year:end_year]
-    country_data = country_data.astype("float")
+    data = data[(data["area"] == country) & (data["months"] == period)] ## filtering
+    data = data.T
+    data = data.drop(index = ['area code','area','months','element code','element']) ## deleting unnecesary data.
+    data.columns = ["Temperature Anomaly"] ## reassigning column and adjusting type again
+    data = data.loc[year_bottom:year_top] ## filtering based on desired years
+    data = data.astype("float")
+    data.index = data.index.astype(int) ## fixing index dtype
         ## creating color map of result for easier plotting
-    country_data["color"] = np.where(country_data["Temperature Anomaly"] > 0, "red", "blue")
-        ## fixing index dtype
-    country_data.index = country_data.index.astype(int)
+    data["color"] = np.where(data["Temperature Anomaly"] > 0, "red", "blue")
         ## setting index as column for plot purposes
-    country_data = country_data.reset_index()
-    country_data = country_data.rename(columns={"index":"Year"})
-    return country_data
+    data = data.reset_index()
+    data = data.rename(columns={"index":"Year"})
+    return data
 
-def config_data_multi(data = None, country_list = [], year_bottom = 1992, year_top = 2019, period = "January"):
+def config_data_multi(data = None, country_list = ["Nicaragua", "Costa Rica"], year_bottom = 1992, year_top = 2019, period = "January"):
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
-    pass
+    data = data[data["area"].apply(lambda x: x in country_list)]
+    data = data[data["months"] == period]
+    data = data.T
+    area_order = list(data.loc["area"]) # since column names are lost and not in order, we'll get them before dropping unnecesary stuff
+    data = data.drop(index = ['area code', 'area', 'months','element code','element']) #dropping unnnecessary indexes
+    data.columns = area_order # manually setting the column names in the correct order
+    data = data.loc[year_bottom:year_top] ## filtering based on desired years
+    data = data.astype("float") # fixing dtypes
+    data.index = data.index.astype(int)
+    for column in list(data.columns): # setting colors in order of appearance
+        data[column+"_color"] = np.where(data[column] > 0, "red", "blue")
+    return data
 
 ########################################################## PLOT SECTION ##########################################################
 
@@ -127,13 +126,17 @@ def plot_onec(data):
     )
 
     # creating a reference line at 0
-    fig.add_scatter(
-    x = data["Year"],
-    y = [0]*len(data), # instantiating a bunch of 0s
-    mode = "lines",
-    line = dict(
-        color = "rgba(0, 43, 51, 0.3)", # setting color via RGB to set an alpha
-        dash = "dash")
+    fig.add_shape(
+    type="line",
+    x0=list(data["Year"])[0],
+    y0=0,
+    x1=list(data["Year"])[-1],
+    y1=0,
+    line=dict(
+        color='rgba(0, 0, 0, 0.5)', # reference line through RGBA to add transparency
+        width=2,
+        dash="dot"
+        )
     )
 
     fig.update_layout(
@@ -142,10 +145,9 @@ def plot_onec(data):
         xaxis = dict(
             tickmode = 'linear',
             tick0 = list(data["Year"])[0],
-            dtick = 2), # setting ticks to be all years in the existing range for easier read
+            dtick = 2), # setting ticks to be every 2nd year in the existing range for easier read
         font = dict(
-            size=14),
-        showlegend = False # hiding legend because its not needed here
+            size=14)
         )
     
     return fig

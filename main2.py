@@ -1,5 +1,4 @@
 import pandas as pd
-from streamlit.elements import data_frame
 from Climatevizv2 import *
 
 st.set_page_config(layout="wide")
@@ -15,31 +14,37 @@ viz_opt = st.sidebar.selectbox(label="Select what you wish to see!", options=["N
 
 if viz_opt == "Multiple countries":
     countries = st.sidebar.multiselect("Select countries to visualize", data["area"].unique()) # displaying list of available countries , default option is an empty list for flow control
-    if len(countries) != 0:
+    if len(countries) > 1:
         years = multic_year_range(data, countries)
         low, high = st.sidebar.slider("Select years from the available period", min_value = min(years), max_value = max(years), value = (min(years), max(years))) # creating slider to retrieve desired period based on available years
         period_list = list(data["months"].unique())
         period_list.append("")
         period = st.sidebar.selectbox("Period to visualize", period_list, index = (len(period_list) - 1)) # period to display from slider , default option is an empty string for flow control
         if period != "":
-            st.header(f"Visualizing **LAND** temperature anomalies for **{' & '.join(countries)}**")
-            
-            ### PARSING OF DATAFRAME MISSING
+            if len(countries) < 5:
+                st.header(f"Visualizing **LAND** temperature anomalies for **{' & '.join(countries)}**")
+            elif len(countries):
+                st.header(f"Visualizing **LAND** temperature anomalies for **many countries!**")
+            parsed_data = config_data_multi(data, countries, low, high, period)
+            st.write(parsed_data)
+        
             ### PLOTTING IN PLOTLY MISSING
 
 elif viz_opt == "One country":
     country_list = list(data["area"].unique())
     country_list.append("")
     country = st.sidebar.selectbox("Select a country to visualize", country_list, index= (len(country_list) - 1)) # displaying list of available countries, default option is an empty string for flow control
-    if country != "":
+    
+    if country != "": # placeholder decision used for responsiveness and easier visualization 
         years = onec_year_range(data, country) # extracting available year range for the country selected
         low, high = st.sidebar.slider("Select years from the available period", min_value = min(years), max_value = max(years), value = (min(years), max(years))) # creating slider to retrieve desired period based on available years
         period_list = list(data["months"].unique())
         period_list.append("")
         period = st.sidebar.selectbox("Select period to visualize", period_list, index = (len(period_list) - 1)) # period to display from slider , default option is an empty string for flow control
-        if period != "":
+        
+        if period != "": # placeholder decision used for responsiveness and easier visualization 
             parsed_data = config_data_onec(data, country, low, high, period) # extracting country specific data based on current parameters
-            st.header(f"Visualizing **LAND** temperature anomalies for **{country}**") # header
+            st.header(f"Visualizing **LAND** temperature anomalies for **{country}**")
             fig = plot_onec(parsed_data) # creating figure
             st.plotly_chart(fig, use_container_width = True) #instantiating figure and sizing to container
 
