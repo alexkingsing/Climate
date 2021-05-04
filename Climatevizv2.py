@@ -77,6 +77,9 @@ def multic_year_range(data = None, countries = ["Nicaragua", "Costa Rica"] ):
 ########################################################## SLICING DATAFRAME SECTION ##########################################################
 
 def config_data_onec(data = None, country = None, year_bottom = None, year_top = None, period = None):
+    '''
+    Function to parse data in the one_country scenario.
+    '''
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
     data = data[(data["area"] == country) & (data["months"] == period)] ## filtering
@@ -94,6 +97,9 @@ def config_data_onec(data = None, country = None, year_bottom = None, year_top =
     return data
 
 def config_data_multi(data = None, country_list = [], year_bottom = None, year_top = None, period = None):
+    '''
+    Function to parse data in the multi_country scenario.
+    '''
     if data is None:
         raise FileNotFoundError("DATA NOT LOAD FAILURE, ENDING.")
     data = data[data["area"].apply(lambda x: x in country_list)]
@@ -130,7 +136,7 @@ def plot_onec(data, bottom, top):
     line=dict(color="grey")
     )
 
-    # creating a reference line at 0
+    # creating a reference line at 0 (ALTERNATIVE METHOD)
     fig.add_shape(
     type="line",
     x0= bottom,
@@ -142,6 +148,30 @@ def plot_onec(data, bottom, top):
         width=2,
         dash="dot"
         )
+    )
+
+    # creating reference line at max value (RECOMMENDED METHOD)
+    fig.add_hline(
+        y = data["Temperature Anomaly"].max(),
+        line_dash = "dash",
+        opacity = 0.5,
+        line_color = "red",
+        annotation_text = "Max Temp Anomaly",
+        annotation_position = "top right",
+        annotation_font_size = 14,
+        annotation_font_color = "red"
+    )
+
+    # creating reference line at min value (RECOMMENDED METHOD)
+    fig.add_hline(
+        y = data["Temperature Anomaly"].min(),
+        line_dash = "dash",
+        opacity = 0.5,
+        line_color = "blue",
+        annotation_text = "Min Temp Anomaly",
+        annotation_position = "bottom right",
+        annotation_font_size = 14,
+        annotation_font_color = "blue"
     )
 
     fig.update_layout(
@@ -172,6 +202,30 @@ def plot_multic(data, countries, bottom, top):
         width=2,
         dash="dot"
         )
+    )
+
+     # creating reference line at max value (RECOMMENDED METHOD)
+    fig.add_hline(
+        y = data.iloc[:,:len(countries)].max().max(),
+        line_dash = "dash",
+        opacity = 0.5,
+        line_color = "red",
+        annotation_text = "Max Temp Anomaly",
+        annotation_position = "top right",
+        annotation_font_size = 14,
+        annotation_font_color = "red"
+    )
+
+    # creating reference line at min value (RECOMMENDED METHOD)
+    fig.add_hline(
+        y = data.iloc[:,:len(countries)].min().min(),
+        line_dash = "dash",
+        opacity = 0.5,
+        line_color = "blue",
+        annotation_text = "Min Temp Anomaly",
+        annotation_position = "bottom right",
+        annotation_font_size = 14,
+        annotation_font_color = "blue"
     )
 
     if len(countries) < 4:
@@ -213,8 +267,7 @@ def plot_multic(data, countries, bottom, top):
         tick0 = bottom,
         dtick = 2), # setting ticks to be every 2nd year in the existing range for easier read
     font = dict(
-        size=14),
-    plot_bgcolor = "rgba(230,230,230,0.1)"
+        size=14)
     )
 
     return fig

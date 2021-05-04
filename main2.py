@@ -28,10 +28,6 @@ if viz_opt == "Multiple countries":
             parsed_data = config_data_multi(data, countries, low, high, period) # extracting countries specific data based on current parameters
             fig = plot_multic(parsed_data, countries, low, high) # creating figure
 
-            # TODO: extracting index of value of max and min anomalies ---- > CONTINUE WITH THIS. LAST MISSING PART
-            # idxmax = parsed_data["Temperature Anomaly"].idxmax()
-            # idxmin = parsed_data["Temperature Anomaly"].idxmin()
-
             if len(countries) < 4: # Decisions for responsiveness and better text representation
                 st.header(f"Visualizing **LAND** temperature anomalies for **{' & '.join(countries)}**")
                 st.subheader(f"Period: **{low}**-**{high}**, **{period}**")
@@ -39,6 +35,20 @@ if viz_opt == "Multiple countries":
                 with col1:
                     st.write("If the plot is too small, click the expander button at the top-right of the chart")
                     st.plotly_chart(fig, use_container_width = True) # instantiating figure and sizing to container
+
+                # discovering max and mins before finally passing the data
+                filt_max = parsed_data.iloc[:,:len(countries)].max() ## creating max value filters
+                filt_min = parsed_data.iloc[:,:len(countries)].min() ## creating min value filters
+
+                max_data = parsed_data[filt_max.idxmax()] ## for better parsing of the data, retrieve the idxmax and slice a copy
+                min_data = parsed_data[filt_min.idxmin()] ## for better parsing of the data, retrieve the idmxin and slice a copy
+
+                with col2:
+                    st.write("**Max** temperature anomaly in selected data")
+                    st.table(max_data[max_data == filt_max.max()])
+                    
+                    st.write("**Min** temperature anomaly in selected data")
+                    st.table(min_data[min_data == filt_min.min()])
 
                 # hold data at the bottom of the app
                 with st.beta_expander(label = "Click to see data", expanded = False):
@@ -51,11 +61,17 @@ if viz_opt == "Multiple countries":
                 with col1:
                     st.write("If the plot is too small, click the expander button at the top-right of the chart")
                     st.plotly_chart(fig, use_container_width = True) # instantiating figure and sizing to container
-                
+            
                 # hold data at the bottom of the app
                 with st.beta_expander(label = "Click to see data", expanded = False):
                     st.dataframe(parsed_data.iloc[:,:len(countries)]) # slicing away the color columns because for some reason i can't get rid of them in other way...
 
+                with col2:
+                    st.write("**Max** temperature anomaly in selected data")
+                    st.table(max_data[max_data == filt_max.max()])
+                    
+                    st.write("**Min** temperature anomaly in selected data")
+                    st.table(min_data[min_data == filt_min.min()])
 
 elif viz_opt == "One country":
     country_list = list(data["area"].unique())
@@ -75,7 +91,6 @@ elif viz_opt == "One country":
             idxmax = parsed_data["Temperature Anomaly"].idxmax()
             idxmin = parsed_data["Temperature Anomaly"].idxmin()
             st.header(f"Visualizing **LAND** temperature anomalies for **{country}**")
-            st.subheader(f"Period: **{low}**-**{high}**, **{period}**")
             fig = plot_onec(parsed_data, low, high) # creating figure
 
             col1, col2 = st.beta_columns([5,1]) # creating display sections for better visualization. The syntax means the "portions" of the page width each col takes.
@@ -86,12 +101,12 @@ elif viz_opt == "One country":
             with col2: # small tables section
                 st.write("Year of **max** temperature anomaly")
                 if isinstance(parsed_data.loc[idxmax]["Temperature Anomaly"], np.float64) == True:
-                    st.table(pd.DataFrame({parsed_data.loc[idxmax]["Year"]:parsed_data.loc[idxmin]["Temperature Anomaly"]}, index = ["Temp. Anomaly"]))
+                    st.table(pd.DataFrame({parsed_data.loc[idxmax]["Year"]:parsed_data.loc[idxmax]["Temperature Anomaly"]}, index = ["Temp. Anomaly"]))
                 else:
                     st.table(parsed_data.loc[idxmax]["Temperature Anomaly"])
 
                 st.write("Year of **min** temperature anomaly")
-                if isinstance(parsed_data.loc[idxmax]["Temperature Anomaly"], np.float64) == True:
+                if isinstance(parsed_data.loc[idxmin]["Temperature Anomaly"], np.float64) == True:
                     st.table(pd.DataFrame({parsed_data.loc[idxmin]["Year"]:parsed_data.loc[idxmin]["Temperature Anomaly"]}, index = ["Temp. Anomaly"]))
                 else:
                     st.table(parsed_data.loc[idxmin]["Temperature Anomaly"])
@@ -107,4 +122,9 @@ elif viz_opt == "One country":
             href = f'<a href="data:file/csv;base64,{b64}">Download CSV File</a> (***IMPORTANT***: right-click and save as <your_name>.csv)'
             st.markdown(href, unsafe_allow_html=True)
 else:
-    pass    
+    # Display at start
+    st.title("Welcome to the land temperature anomaly data visualization tool!")
+    st.header('''Land temperature anomaly is defined as: *"The departure from the average temperature, positive or negative, over a certain period (day, week, month or year)"* ''')
+    st.subheader('''To start exploring the data, please use the sidebar on the left side!
+    <-------
+    ''')
