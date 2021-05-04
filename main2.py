@@ -1,3 +1,4 @@
+import base64
 import pandas as pd
 from Climatevizv2 import *
 
@@ -13,7 +14,7 @@ st.sidebar.title("Display options")
 viz_opt = st.sidebar.selectbox(label="Select what you wish to see!", options=["None","One country", "Multiple countries"])
 
 if viz_opt == "Multiple countries":
-    countries = st.sidebar.multiselect("Select countries to visualize", data["area"].unique()) # displaying list of available countries , default option is an empty list for flow control
+    countries = st.sidebar.multiselect("Select countries to visualize (Max 3 recommended)", data["area"].unique()) # displaying list of available countries , default option is an empty list for flow control
     
     if len(countries) > 1:
         years = multic_year_range(data, countries) # extracting available year range for the country selected
@@ -28,22 +29,32 @@ if viz_opt == "Multiple countries":
             fig = plot_multic(parsed_data, countries, low, high) # creating figure
 
             # TODO: extracting index of value of max and min anomalies ---- > CONTINUE WITH THIS. LAST MISSING PART
-            #idxmax = parsed_data["Temperature Anomaly"].idxmax()
+            # idxmax = parsed_data["Temperature Anomaly"].idxmax()
             # idxmin = parsed_data["Temperature Anomaly"].idxmin()
 
             if len(countries) < 4: # Decisions for responsiveness and better text representation
                 st.header(f"Visualizing **LAND** temperature anomalies for **{' & '.join(countries)}**")
                 st.subheader(f"Period: **{low}**-**{high}**, **{period}**")
-                col1, col2 = st.beta_columns([3,1]) # creating display sections
+                col1, col2 = st.beta_columns([5,1]) # creating display sections
                 with col1:
+                    st.write("If the plot is too small, click the expander button at the top-right of the chart")
                     st.plotly_chart(fig, use_container_width = True) # instantiating figure and sizing to container
+
+                # hold data at the bottom of the app
+                with st.beta_expander(label = "Click to see data", expanded = False):
+                    st.dataframe(parsed_data.iloc[:,:len(countries)]) # slicing away the color columns because for some reason i can't get rid of them in other way...
 
             elif len(countries) >= 4:
                 st.header(f"Visualizing **LAND** temperature anomalies for **many countries!**")
                 st.subheader(f"Period: **{low}**-**{high}**, **{period}**")
-                col1, col2 = st.beta_columns([3,1]) # creating display sections
+                col1, col2 = st.beta_columns([5,1]) # creating display sections
                 with col1:
+                    st.write("If the plot is too small, click the expander button at the top-right of the chart")
                     st.plotly_chart(fig, use_container_width = True) # instantiating figure and sizing to container
+                
+                # hold data at the bottom of the app
+                with st.beta_expander(label = "Click to see data", expanded = False):
+                    st.dataframe(parsed_data.iloc[:,:len(countries)]) # slicing away the color columns because for some reason i can't get rid of them in other way...
 
 
 elif viz_opt == "One country":
@@ -67,7 +78,7 @@ elif viz_opt == "One country":
             st.subheader(f"Period: **{low}**-**{high}**, **{period}**")
             fig = plot_onec(parsed_data, low, high) # creating figure
 
-            col1, col2 = st.beta_columns([4,1]) # creating display sections for better visualization. The syntax means the "portions" of the page width each col takes.
+            col1, col2 = st.beta_columns([5,1]) # creating display sections for better visualization. The syntax means the "portions" of the page width each col takes.
 
             with col1: # plot section
                 st.plotly_chart(fig, use_container_width = True) # instantiating figure and sizing to container
@@ -88,5 +99,12 @@ elif viz_opt == "One country":
             # hold data at the bottom of the app
             with st.beta_expander(label = "Click to see data", expanded = False):
                 st.dataframe(parsed_data.set_index("Year")["Temperature Anomaly"])
+
+            # section below is related to download. Workaround found at 'awesome streamlit' https://discuss.streamlit.io/t/file-download-workaround-added-to-awesome-streamlit-org/1244
+            df = parsed_data.set_index("Year")
+            csv = df.to_csv(index=False)
+            b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+            href = f'<a href="data:file/csv;base64,{b64}">Download CSV File</a> (***IMPORTANT***: right-click and save as <your_name>.csv)'
+            st.markdown(href, unsafe_allow_html=True)
 else:
     pass    

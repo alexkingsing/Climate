@@ -109,6 +109,10 @@ def config_data_multi(data = None, country_list = [], year_bottom = None, year_t
         data[column+"_color"] = np.where(data[column] > 0, "red", "blue")
     return data
 
+def max_multi_display(data = None):
+    if data is None:
+        raise NotImplementedError("ERROR LOADING DATA")
+    pass
 ########################################################## PLOT SECTION ##########################################################
 
 def plot_onec(data, bottom, top):
@@ -172,6 +176,7 @@ def plot_multic(data, countries, bottom, top):
 
     if len(countries) < 4:
         line_types = ['dash', 'dot', 'dashdot']
+        line_colors = ["black", "purple", "darkgreen"]
         for i,country in enumerate(countries):
             fig.add_scatter(
                 x = data.index,
@@ -181,9 +186,9 @@ def plot_multic(data, countries, bottom, top):
                     color = data.iloc[:,len(countries)+i],
                     size = 10),
                 line = dict(
-                    color = "grey",
+                    color = line_colors[i],
                     dash = line_types[i],
-                    width = 2),
+                    width = 3),
                 name = country
             )
     
@@ -208,7 +213,8 @@ def plot_multic(data, countries, bottom, top):
         tick0 = bottom,
         dtick = 2), # setting ticks to be every 2nd year in the existing range for easier read
     font = dict(
-        size=14)
+        size=14),
+    plot_bgcolor = "rgba(230,230,230,0.1)"
     )
 
     return fig
