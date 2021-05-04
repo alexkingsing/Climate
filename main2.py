@@ -53,6 +53,13 @@ if viz_opt == "Multiple countries":
                 # hold data at the bottom of the app
                 with st.beta_expander(label = "Click to see data", expanded = False):
                     st.dataframe(parsed_data.iloc[:,:len(countries)]) # slicing away the color columns because for some reason i can't get rid of them in other way...
+                
+                # section below is related to download. Workaround found at 'awesome streamlit' https://discuss.streamlit.io/t/file-download-workaround-added-to-awesome-streamlit-org/1244
+                df = parsed_data.iloc[:,len(countries)]
+                csv = df.to_csv(index=False)
+                b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+                href = f'<a href="data:file/csv;base64,{b64}">Download CSV File</a> (***IMPORTANT***: right-click and save as <your_name>.csv)'
+                st.markdown(href, unsafe_allow_html=True)
 
             elif len(countries) >= 4:
                 st.header(f"Visualizing **LAND** temperature anomalies for **many countries!**")
@@ -124,7 +131,5 @@ elif viz_opt == "One country":
 else:
     # Display at start
     st.title("Welcome to the land temperature anomaly data visualization tool!")
-    st.header('''Land temperature anomaly is defined as: *"The departure from the average temperature, positive or negative, over a certain period (day, week, month or year)"* ''')
-    st.subheader('''To start exploring the data, please use the sidebar on the left side!
-    <-------
-    ''')
+    st.subheader('''Land temperature anomaly is defined as: *"The departure from the average temperature, positive or negative, over a certain period (day, week, month or year)"* ''')
+    st.subheader('''To start exploring the data, please use the sidebar on the left side!''')
